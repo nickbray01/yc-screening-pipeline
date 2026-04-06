@@ -35,40 +35,24 @@ Pipeline 1 (Team)  →  Pipeline 2 (Product)  →  Pipeline 3 (Moat)  →  outre
 
 **Script:** `data-collection/final/1 - team/yc_screener_v2.py`
 
-Evaluates founder backgrounds and team composition. No dedicated CLI batch runner — call the module directly.
+Evaluates founder backgrounds and team composition.
 
 **Signals produced:**
 - Domain relevance score (1–10) and team completeness score (1–10)
 - Booleans: worked in target industry, held target function, prior exit, repeat YC, from top company, technical/commercial co-founder, domain expert, solo founder
 - Overall signal: `STRONG` | `MODERATE` | `WEAK` | `PASS`
 
-**Single company:**
-```python
-import asyncio
-from yc_screener_v2 import YCScreeningPipeline
+```bash
+cd "data-collection/final/1 - team"
 
-async def main():
-    pipeline = YCScreeningPipeline()
-    card = await pipeline.screen_fast(
-        "https://www.ycombinator.com/companies/trycardinal-ai"
-    )
-    print(card.to_row())  # flat dict, ready for CSV
+# Single company
+python yc_screener_v2.py https://www.ycombinator.com/companies/trycardinal-ai
 
-asyncio.run(main())
-```
+# Batch from a file of URLs (one per line)
+cat urls.txt | python yc_screener_v2.py --csv=team_signals.csv
 
-**Batch:**
-```python
-async def main():
-    pipeline = YCScreeningPipeline(max_concurrent=3)
-    urls = ["https://www.ycombinator.com/companies/co1", ...]
-
-    results = await pipeline.screen_batch_fast(urls)
-
-    from yc_screener_v2 import export_csv
-    export_csv(results, "team_signals.csv")
-
-asyncio.run(main())
+# Batch (space-separated URLs)
+python yc_screener_v2.py URL1 URL2 URL3 --csv=team_signals.csv
 ```
 
 ---
@@ -86,7 +70,6 @@ Searches company websites, ProductHunt, app stores, GitHub, HN, and news to asse
 - Booleans: live product, paying customers, user evidence, public iteration, specific user problem identified, beachhead segment defined
 - Text: strongest evidence, biggest product gap
 
-**Batch (CLI):**
 ```bash
 cd "data-collection/final/2 - product"
 
@@ -95,24 +78,6 @@ python run_product_batch.py companies.csv --output product_enriched.csv --limit 
 python run_product_batch.py companies.csv --output product_enriched.csv --concurrency 5  # parallel workers
 python run_product_batch.py companies.csv --output product_enriched.csv --filter-active  # active companies only
 python run_product_batch.py companies.csv --output product_enriched.csv --resume         # skip already-done rows
-```
-
-**Single company:**
-```python
-import asyncio
-from product_enricher import ProductEnricher
-
-async def main():
-    enricher = ProductEnricher()
-    signals = await enricher.enrich(
-        company_name="Cardinal",
-        website_url="https://trycardinal.ai",
-        yc_url="https://www.ycombinator.com/companies/trycardinal-ai",
-        one_liner="AI Platform for Precision Outbound",
-    )
-    print(signals.to_row())
-
-asyncio.run(main())
 ```
 
 ---
@@ -132,7 +97,6 @@ Analyzes competitive density, incumbent funding, OSS alternatives, patents, and 
 - Batch competitor count and names
 - Competitive context brief and key question for meeting
 
-**Batch (CLI):**
 ```bash
 cd "data-collection/final/3 - moat"
 
@@ -140,26 +104,6 @@ python defensibility_batch.py product_enriched.csv --output defensibility_enrich
 python defensibility_batch.py product_enriched.csv --output defensibility_enriched.csv --limit 10
 python defensibility_batch.py product_enriched.csv --output defensibility_enriched.csv --concurrency 3
 python defensibility_batch.py product_enriched.csv --output defensibility_enriched.csv --resume
-```
-
-**Single company:**
-```python
-import asyncio
-from defensibility_enricher import DefensibilityEnricher
-
-async def main():
-    enricher = DefensibilityEnricher()
-    card = await enricher.enrich(
-        company_name="Cardinal",
-        one_liner="AI Platform for Precision Outbound",
-        website="https://trycardinal.ai",
-        batch_companies=[  # pass full batch for peer analysis
-            {"name": "OtherCo", "one_liner": "AI sales outreach"},
-        ],
-    )
-    print(card.market_crowding, card.moat_type)
-
-asyncio.run(main())
 ```
 
 ---
