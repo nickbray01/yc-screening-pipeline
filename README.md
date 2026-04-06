@@ -1,4 +1,4 @@
-# Greylock YC Screening Pipeline
+# YC Screening Pipeline
 
 A three-stage LangChain + Claude pipeline that evaluates YC companies across **Team**, **Product**, and **Moat/Defensibility** signals, plus a CLI tool for generating VC outreach prompts.
 
